@@ -1,5 +1,9 @@
 # ☀️ 太陽能系統理論潛力月度計算器（Local Solar Potential Calculator）
 
+[👉 點我立即試用 Demo](http://580.blias.com/solar/solar.html)
+
+---
+
 這是一個簡單的網頁工具，可以幫你用地圖點地點、選月份，估算那個地點在理想晴天下的**太陽能發電潛力**。
 
 你可以：
@@ -18,6 +22,8 @@
 ---
 
 ## 🌍 Local Solar Monthly Potential Estimator
+
+[👉 Try Live Demo Here](http://580.blias.com/solar/solar.html)
 
 A lightweight web-based tool that lets you:
 
@@ -41,21 +47,26 @@ All calculations are done **entirely in-browser** — no backend required.
 
 ---
 
-## 🚀 開始使用 / Try it Out
+## 🚀 開始使用 / How to Use
 
-直接打開 `solar.html` 就能使用！  
-Open `solar.html` in your browser — no setup needed.
+1. 打開 [`solar.html`](solar.html) 或點擊上方的 Demo 網址。
+2. 選擇縣市或在地圖上點選位置。
+3. 輸入你的系統資訊與損耗參數。
+4. 一鍵計算理論太陽能發電潛力。
 
 ---
 
-## 📌 注意 / Notes
+## 📌 注意事項 / Notes
 
 - 理論發電量假設理想晴天（1000W/m² 垂直輻射）
-- 結果僅供參考，實際發電會因天氣與環境而不同
-- 若出現錯誤提示，請檢查經緯度格式是否正確
+- 結果僅供參考，實際發電會因天氣與環境條件而有所不同
+- 請確保經緯度格式正確（例如：`23.588093, 120.630267`）
 
 ---
 
-## 📄 License
+## 🖼️ 預覽 / Preview
 
-MIT License.
+（如果你有放圖片，可以在這裡加一行，例如👇）
+
+```markdown
+![Preview Screenshot](preview.png)

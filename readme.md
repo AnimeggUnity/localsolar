@@ -1,71 +1,61 @@
-Local Solar
-Local Solar 是一個簡單的小工具，可以根據經緯度快速估算某地區的太陽照射量。
-目標是提供一個輕量、好上手的計算器，適合初步了解當地太陽能資源潛力。
+# ☀️ 太陽能系統理論潛力月度計算器（Local Solar Potential Calculator）
 
-功能
-輸入地點經緯度，快速計算當地太陽照射量
+這是一個簡單的網頁工具，可以幫你用地圖點地點、選月份，估算那個地點在理想晴天下的**太陽能發電潛力**。
 
-支援單點估算
+你可以：
 
-簡單直覺的操作流程
+- 點選地圖或選擇縣市快速定位
+- 輸入面板瓦數、數量、傾角與方位角
+- 自訂估計損耗（陰影、老化、線損等）
+- 計算該月的理論最大發電量
+- 查詢歷史實際日照資料（來自 Open-Meteo）
+- 顯示每日發電估算與日照表格
+- 顯示該月最佳理論角度、全年建議角度
+- 自動儲存上次的設定
 
-技術
-純 HTML / CSS / JavaScript
+無需後端，所有運算都在前端完成，支援桌機與手機瀏覽器。
 
-計算公式基於基礎太陽能輻射模型
+---
 
-（可選）未來可能串接外部 API 改善資料精度
+## 🌍 Local Solar Monthly Potential Estimator
 
-使用方式
-輸入或選取目標地點的經緯度
+A lightweight web-based tool that lets you:
 
-點擊「計算」取得太陽照射量估算值
+- Click on a map or select a location (Taiwan's cities)
+- Enter your solar panel setup (watts, tilt, azimuth, losses)
+- Estimate **theoretical maximum energy production** for a given month
+- Fetch **actual daily sun hours** from historical Open-Meteo data
+- View suggested **optimal tilt & azimuth** (monthly and yearly)
+- Save your last setup locally (via localStorage)
 
-計畫狀態
-目前是基礎版本，主要以簡化流程為主。
-後續會考慮加入：
+All calculations are done **entirely in-browser** — no backend required.
 
-氣象資料補正
+---
 
-不同傾角、方位角模擬
+## 🛠 技術技術 / Tech Stack
 
-批次查詢功能
+- HTML + CSS + JavaScript (Vanilla)
+- Leaflet.js 地圖功能
+- Open-Meteo API（歷史日照資料）
+- 完全前端運算，無伺服器依賴
 
-License
-MIT License.
+---
 
-Local Solar
-Local Solar is a simple tool that estimates solar irradiance for a given location based on latitude and longitude.
-The goal is to provide a lightweight and easy-to-use calculator for quickly assessing local solar energy potential.
+## 🚀 開始使用 / Try it Out
 
-Features
-Input latitude and longitude to calculate local solar irradiance
+直接打開 `solar.html` 就能使用！  
+Open `solar.html` in your browser — no setup needed.
 
-Supports single-point estimation
+---
 
-Simple and intuitive workflow
+## 📌 注意 / Notes
 
-Technologies
-Pure HTML / CSS / JavaScript
+- 理論發電量假設理想晴天（1000W/m² 垂直輻射）
+- 結果僅供參考，實際發電會因天氣與環境而不同
+- 若出現錯誤提示，請檢查經緯度格式是否正確
 
-Basic solar radiation model for calculations
+---
 
-(Optional) Future integration with external APIs for improved data accuracy
+## 📄 License
 
-How to Use
-Enter or select the target location (latitude and longitude).
-
-Click "Calculate" to get the estimated solar irradiance.
-
-Project Status
-Currently in a basic version focused on simplicity.
-Future plans include:
-
-Weather data adjustments
-
-Simulation of different panel tilt and azimuth angles
-
-Batch query support
-
-License
 MIT License.

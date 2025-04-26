@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>太陽能系統理論潛力月度計算 - 含地圖與縣市選擇</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        /* ===== 基礎樣式 ===== */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            flex-direction: row;
+        }
+
+        /* ===== 容器樣式 ===== */
+        .container {
+            flex: 1;
+            max-width: 600px;
+            min-width: 300px;
+            margin: 20px;
+            background-color: #fff;
+            padding: 20px 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            z-index: 2;
+            position: relative;
+        }
+
+        #map {
+            flex: 2;
+            min-width: 400px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            margin: 0;
+            z-index: 1;
+        }
+
+        /* ===== 標題樣式 ===== */
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #0056b3;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        /* ===== 輸入欄位樣式 ===== */
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .input-group label {
+            display: inline-block;
+            width: 160px;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #555;
+            flex-shrink: 0;
+            padding-top: 8px;
+            box-sizing: border-box;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"],
+        .input-group select {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            min-width: 150px;
+        }
+
+        .month-year-group {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .month-year-group select,
+        .month-year-group input[type="number"] {
+            flex-grow: 1;
+            min-width: unset;
+        }
+
+        /* ===== 說明文字樣式 ===== */
+        .input-help-text {
+            width: 100%;
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0 15px;
+            box-sizing: border-box;
+            text-align: justify;
+        }
+
+        .input-help-text ul {
+            margin: 5px 0 0;
+            padding-left: 20px;
+        }
+
+        .input-help-text li {
+            margin-bottom: 3px;
+        }
+
+        .angle-suggestion-note {
+            margin: 15px 0 20px;
+            padding-left: 0;
+            width: 100%;
+            font-size: 0.9em;
+            color: #666;
+            text-align: justify;
+            box-sizing: border-box;
+        }
+
+        /* ===== 按鈕樣式 ===== */
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.suggest-button {
+            background-color: #28a745;
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+
+        button.suggest-button:hover {
+            background-color: #218838;
+        }
+
+        button.suggest-button:last-of-type {
+            margin-bottom: 15px;
+        }
+
+        /* ===== 訊息顯示區域樣式 ===== */
+        #messageArea {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 1.2em;
+        }
+
+        #messageArea p {
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        #messageArea.info {
+            background-color: #e9f2f9;
+            border: 1px solid #cce5ff;
+            color: #004085;
+        }
+
+        #messageArea.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        #messageArea.warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+
+        #messageArea.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        /* ===== 結果顯示區域樣式 ===== */
+        #results {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        #results h2 {
+            color: #0056b3;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        #results p {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #555;
+            display: flex;
+            align-items: baseline;
+        }
+
+        #results p strong {
+            display: inline-block;
+            width: 250px;
+            color: #333;
+            flex-shrink: 0;
+            margin-right: 10px;
+            text-align: right;
+        }
+
+        /* ===== 表格樣式 ===== */
+        .daily-records {
+            margin: 20px 0;
+        }
+
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+
+        #dailyRecordsTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        #dailyRecordsTable th,
+        #dailyRecordsTable td {
+            padding: 8px;
+            text-align: right;
+            border: 1px solid #ddd;
+        }
+
+        #dailyRecordsTable th {
+            background-color: #f5f5f5;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        #dailyRecordsTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #dailyRecordsTable tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* ===== 版本歷程記錄樣式 ===== */
+        .version-history {
+            margin-top: 40px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .version-history h2 {
+            color: #0056b3;
+            margin-bottom: 15px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .version-history h2:hover {
+            color: #003d82;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0 5px;
+            transition: transform 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 86, 179, 0.1);
+        }
+
+        .toggle-btn.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .version-list {
+            max-width: 800px;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .version-list.expanded {
+            max-height: 1000px;
+            opacity: 1;
+            visibility: visible;
+            margin: 15px auto;
+        }
+
+        .version-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .version-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .version-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .version-item h3 {
+            color: #0056b3;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .version-item h3::before {
+            content: "V";
+            font-weight: bold;
+            margin-right: 5px;
+            color: #28a745;
+        }
+
+        .version-item ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: none;
+        }
+
+        .version-item li {
+            margin-bottom: 6px;
+            color: #555;
+            position: relative;
+            padding-left: 20px;
+            line-height: 1.4;
+        }
+
+        .version-item li:before {
+            content: "•";
+            color: #0056b3;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .version-item .date {
+            font-size: 0.9em;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .version-item .version-number {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .version-list {
+                max-width: 100%;
+            }
+
+            .version-item {
+                padding: 12px;
+            }
+
+            .version-item h3 {
+                font-size: 1em;
+            }
+
+            .version-item li {
+                font-size: 0.95em;
+            }
+        }
+
+        /* ===== 備註樣式 ===== */
+        .note {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+            text-align: justify;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .note strong {
+            color: #555;
+        }
+
+        /* ===== 響應式設計 ===== */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .container {
+                max-width: 100%;
+                margin: 20px;
+                flex: none;
+                order: 2;
+            }
+
+            #map {
+                height: 400px;
+                min-width: unset;
+                margin: 0 20px 20px 20px;
+                position: relative;
+                z-index: 1;
+                order: 1;
+            }
+
+            .input-group label {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 5px;
+                padding-top: 0;
+            }
+
+            .input-group input[type="text"],
+            .input-group input[type="number"],
+            .input-group select {
+                min-width: unset;
+            }
+
+            .month-year-group {
+                gap: 5px;
+            }
+
+            .input-help-text,
+            .angle-suggestion-note {
+                padding-left: 0;
+                margin-top: 5px;
+                margin-bottom: 10px;
+            }
+
+            #results p strong {
+                width: 100%;
+                text-align: left;
+                margin-bottom: 5px;
+            }
+        }
+
+        /* ===== 工具提示樣式 ===== */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+            z-index: 3;
+        }
+
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #0056b3;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .tooltip-content {
+            visibility: hidden;
+            position: fixed;
+            z-index: 4;
+            width: 300px;
+            background-color: #fff;
+            color: #333;
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-size: 0.9em;
+            line-height: 1.4;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #fff transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .tooltip-content {
+                width: 250px;
+            }
+        }
+
+        .tooltip-content ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .tooltip-content li {
+            margin-bottom: 4px;
+        }
+
+        .tooltip-content strong {
+            color: #0056b3;
+        }
+
+        /* 新增：處理視窗邊界的 tooltip 定位 */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+            z-index: 3;
+        }
+
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 新增：自動調整 tooltip 位置 */
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 新增：處理右側邊界 */
+        .tooltip-container:hover .tooltip-content.right-edge {
+            left: auto;
+            right: 0;
+            transform: none;
+        }
+
+        .tooltip-container:hover .tooltip-content.right-edge::after {
+            left: auto;
+            right: 10px;
+        }
+
+        /* 新增：處理左側邊界 */
+        .tooltip-container:hover .tooltip-content.left-edge {
+            left: 0;
+            right: auto;
+            transform: none;
+        }
+
+        .tooltip-container:hover .tooltip-content.left-edge::after {
+            left: 10px;
+            right: auto;
+        }
+
+        /* 新增：處理底部邊界 */
+        .tooltip-container:hover .tooltip-content.bottom-edge {
+            bottom: auto;
+            top: 125%;
+        }
+
+        .tooltip-container:hover .tooltip-content.bottom-edge::after {
+            top: auto;
+            bottom: 100%;
+            border-color: transparent transparent #fff transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>太陽能系統理論潛力月度計算器</h1>
+        <p>請選擇縣市，或在地圖上點擊選擇地點，或手動輸入經緯度。然後輸入時間、您的太陽能板資訊和安裝角度及估計損耗。</p>
+
+        <h2>地點與時間</h2>
+        <div class="input-group">
+            <label for="countySelect">選擇縣市:</label>
+            <select id="countySelect"></select>
+        </div>
+
+        <div class="input-group">
+            <label for="latLngInput">經緯度 (Lat, Lng):</label>
+            <input type="text" id="latLngInput" value="23.588093, 120.630267" placeholder="點擊地圖或貼上經緯度，例如：23.588093, 120.630267">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    <strong>獲取經緯度：</strong>
+                    <ul>
+                        <li>先選擇縣市讓地圖聚焦</li>
+                        <li>直接在地圖上點擊來自動填入經緯度</li>
+                        <li>或打開 Google 地圖 (<a href="https://maps.google.com/" target="_blank">maps.google.com</a>)</li>
+                        <li>找到地點後點擊滑鼠右鍵</li>
+                        <li>在彈出選單最上方點擊複製經緯度</li>
+                        <li>然後貼到上面的輸入框</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="monthSelect">計算月份:</label>
+            <div class="month-year-group">
+                <select id="monthSelect">
+                    <option value="0">1 月</option>
+                    <option value="1">2 月</option>
+                    <option value="2">3 月</option>
+                    <option value="3">4 月</option>
+                    <option value="4">5 月</option>
+                    <option value="5">6 月</option>
+                    <option value="6">7 月</option>
+                    <option value="7">8 月</option>
+                    <option value="8">9 月</option>
+                    <option value="9">10 月</option>
+                    <option value="10">11 月</option>
+                    <option value="11">12 月</option>
+                </select>
+                <select id="yearSelect"></select>
+            </div>
+        </div>
+
+        <h2>您的系統資訊與安裝</h2>
+        <div class="input-group">
+            <label for="panelWattsEach">單片面板瓦數 (Wp):</label>
+            <input type="number" id="panelWattsEach" value="400" min="1" step="0.1">
+        </div>
+
+        <div class="input-group">
+            <label for="numberOfPanels">太陽能板片數:</label>
+            <input type="number" id="numberOfPanels" value="10" min="1" step="1">
+        </div>
+
+        <div class="input-group">
+            <label for="panelTilt">面板傾斜角 (度, 0-90):</label>
+            <input type="number" id="panelTilt" value="23.5" min="0" max="90" step="0.1">
+        </div>
+
+        <div class="input-group">
+            <label for="panelAzimuth">面板方位角 (度, 北0, 東90, 南180, 西270):</label>
+            <input type="number" id="panelAzimuth" value="180" min="0" max="360" step="0.1">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    <strong>如何判斷方位角：</strong>
+                    <ul>
+                        <li>打開 Google 地圖衛星圖</li>
+                        <li>找到您的屋頂或面板安裝位置</li>
+                        <li>地圖的正上方是北方 (0度)</li>
+                        <li>朝北 ≈ 0 或 360 度 (通常不建議朝北)</li>
+                        <li>朝東 ≈ 90 度</li>
+                        <li>朝南 ≈ 180 度 (北半球通常最佳方向)</li>
+                        <li>朝西 ≈ 270 度</li>
+                        <li>朝向中間方向請估計一個介於中間的角度</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <button id="showIdealAngleForSelectedMonth" class="suggest-button">顯示該月理論最佳角度</button>
+        <button id="suggestAnnualAngleButton" class="suggest-button">建議全年最佳安裝角度</button>
+
+        <div class="tooltip-container" style="display: block; margin: 15px 0;">
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-content">
+                <strong>關於最佳安裝角度：</strong>
+                <p>太陽能板要獲得更高的日照強度，需要盡可能讓陽光直射面板表面。太陽在天空中的路徑隨時間和地點變化，最佳的面板角度會因此改變。</p>
+                <p>通常來說：</p>
+                <ul>
+                    <li>
+                        <strong>該月理論最佳角度：</strong> 如果太陽能板可以隨時調整角度 (例如使用追蹤器)，那麼在特定月份最大化發電量的理論上最佳角度約為 所在地緯度 - 該月平均太陽赤緯，方位角通常朝南 (180度)。本工具「顯示該月理論最佳角度」功能即提供此理論值，用於了解太陽軌跡對角度的影響，不建議用於固定式安裝。
+                    </li>
+                    <li>
+                        <strong>全年最佳安裝角度 (固定式建議)：</strong> 對於大多數固定式安裝的太陽能系統，最佳傾斜角約為 所在地緯度，方位角通常朝南 (180度)。這是全年平均下來能接收到最多太陽輻射的設置。本工具「建議全年最佳安裝角度」功能提供此實用建議，點擊後會自動填入建議值供您計算。
+                    </li>
+                </ul>
+                <p>例如，台灣一些主要城市的緯度：台北 (約 25°N)、台中 (約 24.2°N)、台南 (約 23°N)、恆春 (約 22°N)。全年最佳傾斜角估計值大致與這些緯度數字接近。</p>
+            </div>
+        </div>
+
+        <div id="messageArea"></div>
+
+        <h2>估計系統損耗 (%)</h2>
+        <div class="input-group">
+            <label for="shadingLoss">估計陰影損耗 (%) :</label>
+            <input type="number" id="shadingLoss" value="5" min="0" max="100" step="0.1">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    請估計因樹木、建築物、煙囪等遮蔽物造成的發電量損失百分比。如果完全沒有遮蔽，請輸入 0。
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="soilingAgingLoss">估計污染/老化損耗 (%) :</label>
+            <input type="number" id="soilingAgingLoss" value="2" min="0" max="100" step="0.1">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    請估計因面板表面灰塵、鳥糞積累或面板自然老化造成的發電量損失百分比。
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="otherLoss">估計其他損耗 (%) :</label>
+            <input type="number" id="otherLoss" value="8" min="0" max="100" step="0.1">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    請估計因電線、逆變器、連接器、配對等其他非陰影和污染因素造成的損耗百分比 (通常在 5%-10% 之間)。
+                </div>
+            </div>
+        </div>
+
+        <button onclick="calculateMonthlySolar()">計算理論發電潛力</button>
+
+        <div id="results">
+            <h2>計算結果 (理論最大值):</h2>
+            <p><strong>計算月份:</strong> <span id="calculatedMonth">-</span></p>
+            <p><strong>系統總瓦數:</strong> <span id="calculatedSystemWatts">-</span> Wp</p>
+            <p><strong>估計總系統損耗:</strong> <span id="calculatedTotalLoss">-</span> %</p>
+            <p><strong>該月總理論發電能量:</strong> <span id="monthlyTotalEnergy">-</span> kWh (理想晴天)</p>
+
+            <h2>實際日照數據 (歷史資料)</h2>
+            <div id="historicalData">
+                <p><strong>實際平均日照強度:</strong> <span id="actualAvgIrradiance">-</span> W/m²</p>
+                <p><strong>實際總日照時數:</strong> <span id="actualSunHours">-</span> 小時</p>
+                <p><strong>實際發電量估計:</strong> <span id="actualEnergyEstimate">-</span> kWh</p>
+                
+                <div class="daily-records">
+                    <h3>
+                        每日日照記錄
+                        <div class="tooltip-container" style="display: inline-block; margin-left: 5px;">
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-content">
+                                <strong>備註：</strong>
+                                <ul>
+                                    <li>此數據來自 Open-Meteo API 的歷史氣象資料</li>
+                                    <li>實際發電量估計是基於歷史日照數據和您的系統配置計算得出</li>
+                                    <li>數據僅供參考，實際發電量可能因天氣變化而有所不同</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tooltip-container" style="display: inline-block; margin-left: 5px;">
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-content">
+                                <strong>備註：</strong>
+                                <ul>
+                                    <li>此計算器估計的是在完全理想晴天、無遮蔽的條件下，您輸入的太陽能系統在指定月份可能產生的理論最大發電能量 (千瓦時)</li>
+                                    <li>計算考慮了地點、月份、面板傾斜角、方位角、單片面板瓦數、總片數以及您提供的各項估計損耗百分比</li>
+                                    <li>這裡計算出的發電能量是基於估計的總損耗。這是一個表示系統理論最大潛力的數值，不考慮實際天氣變化、雲量、以及您估計損耗的準確性</li>
+                                    <li>實際發電量會受多種因素影響，通常會低於此理論最大值，且隨每日天氣變化而有顯著差異。此計算結果僅供了解理論極限值和不同設定的潛力差異</li>
+                                </ul>
+                                <p><strong>計算方法簡述：</strong></p>
+                                <ul>
+                                    <li>
+                                        <strong>太陽位置計算：</strong>
+                                        利用您提供的經緯度、指定月份和年份，計算該月每一天、每個時間點 (間隔 10 分鐘) 的太陽在天空中的精確位置。這使用了基於天文學的公式，考慮了地球的自轉、公轉、季節變化（太陽赤緯）和時間校正（均時差、時區）。
+                                    </li>
+                                    <li>
+                                        <strong>面板接收輻射計算：</strong>
+                                        假設在理想晴天下的最大垂直輻射為 1000 W/m² (類似於 STC 標準)。根據計算出的太陽位置和您輸入的面板傾斜角、方位角，計算該時間點太陽光線與面板法向量之間的夾角（入射角）。面板接收到的理論輻射強度等於最大垂直輻射乘以入射角的餘弦值。
+                                    </li>
+                                    <li>
+                                        <strong>瞬間功率計算：</strong>
+                                        將面板接收到的輻射強度與您的系統總瓦數 (面板瓦數 * 片數) 進行比例換算，然後乘以 (1 - 總估計損耗)。
+                                    </li>
+                                    <li>
+                                        <strong>月度能量累加：</strong>
+                                        將該月每一天、每一個時間間隔 (10 分鐘) 計算出的瞬間功率，乘以該時間間隔（10 分鐘 = 1/6 小時），得到該間隔內的能量 (Wh)，然後將所有能量累加起來，得出該月的總能量 (Wh)，最後轉換為 kWh。
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </h3>
+                    <div class="table-container">
+                        <table id="dailyRecordsTable">
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>日照時數</th>
+                                    <th>日照強度</th>
+                                    <th>發電量估計</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="version-history">
+            <h2>
+                版本歷程記錄
+                <button id="toggleVersionHistory" class="toggle-btn">▼</button>
+            </h2>
+            <div id="versionList" class="version-list">
+                <div class="version-item">
+                    <h3><span class="version-number">1.5</span><span class="date">(2024-03-21)</span></h3>
+                    <ul>
+                        <li>加強錯誤處理機制</li>
+                        <li>優化使用者體驗</li>
+                        <li>改進地圖載入與更新邏輯</li>
+                        <li>優化縣市選擇排序</li>
+                    </ul>
+                </div>
+                <div class="version-item">
+                    <h3><span class="version-number">1.4</span><span class="date">(2024-03-21)</span></h3>
+                    <ul>
+                        <li>新增自動儲存上次計算設定</li>
+                        <li>自動載入上次的經緯度與參數</li>
+                        <li>使用 localStorage 保存用戶偏好</li>
+                    </ul>
+                </div>
+                <div class="version-item">
+                    <h3><span class="version-number">1.3</span><span class="date">(2024-03-21)</span></h3>
+                    <ul>
+                        <li>整合 Open-Meteo API 歷史日照資料</li>
+                        <li>新增每日日照記錄表格</li>
+                        <li>顯示實際日照時數與發電量估計</li>
+                    </ul>
+                </div>
+                <div class="version-item">
+                    <h3><span class="version-number">1.2</span><span class="date">(2024-03-21)</span></h3>
+                    <ul>
+                        <li>新增該月理論最佳角度建議</li>
+                        <li>新增全年最佳安裝角度建議</li>
+                        <li>提供詳細的角度說明與建議</li>
+                    </ul>
+                </div>
+                <div class="version-item">
+                    <h3><span class="version-number">1.1</span><span class="date">(2024-03-21)</span></h3>
+                    <ul>
+                        <li>新增地圖方位指示功能</li>
+                        <li>顯示面板朝向方向</li>
+                        <li>優化地圖互動體驗</li>
+                    </ul>
+                </div>
+                <div class="version-item">
+                    <h3><span class="version-number">1.0</span><span class="date">(2024-03-21)</span></h3>
+                    <ul>
+                        <li>建立太陽能發電量計算器</li>
+                        <li>整合地圖選點功能</li>
+                        <li>支援經緯度輸入與地圖點選</li>
+                        <li>提供理論發電量計算</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ===== 全域變數 =====
+        let mymap = null;
+        let locationMarker = null;
+        let directionLine = null;
+
+        // ===== 台灣縣市中心點經緯度數據 =====
+        const taiwanCounties = {
+            "連江縣": { lat: 26.1986, lng: 120.4857 },
+            "基隆市": { lat: 25.1290, lng: 121.7460 },
+            "台北市": { lat: 25.0330, lng: 121.5654 },
+            "新北市": { lat: 25.0119, lng: 121.4626 },
+            "桃園市": { lat: 24.9937, lng: 121.3018 },
+            "新竹市": { lat: 24.8037, lng: 120.9675 },
+            "新竹縣": { lat: 24.7032, lng: 121.1098 },
+            "苗栗縣": { lat: 24.5177, lng: 120.8254 },
+            "台中市": { lat: 24.1478, lng: 120.6741 },
+            "彰化縣": { lat: 24.0885, lng: 120.5350 },
+            "南投縣": { lat: 23.8503, lng: 120.9235 },
+            "雲林縣": { lat: 23.7550, lng: 120.4316 },
+            "嘉義市": { lat: 23.4793, lng: 120.4496 },
+            "嘉義縣": { lat: 23.4559, lng: 120.5594 },
+            "台南市": { lat: 22.9997, lng: 120.2213 },
+            "高雄市": { lat: 22.6273, lng: 120.3014 },
+            "屏東縣": { lat: 22.5508, lng: 120.5495 },
+            "宜蘭縣": { lat: 24.6916, lng: 121.7490 },
+            "花蓮縣": { lat: 23.9738, lng: 121.6015 },
+            "台東縣": { lat: 22.9561, lng: 121.0574 },
+            "澎湖縣": { lat: 23.5668, lng: 119.5790 },
+            "金門縣": { lat: 24.4314, lng: 118.3196 }
+        };
+
+        // ===== 工具函數 =====
+        function degToRad(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+
+        function radToDeg(radians) {
+            return radians * (180 / Math.PI);
+        }
+
+        function getDayOfYear(date) {
+            const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            const diff = date - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay) + 1;
+        }
+
+        function getSolarDeclination(dayOfYear) {
+            const angleInYear_rad = degToRad(360 * (dayOfYear - 81) / 365);
+            const declinationRad = degToRad(23.45) * Math.sin(angleInYear_rad);
+            return radToDeg(declinationRad);
+        }
+
+        // ===== 訊息處理 =====
+        function displayMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            if (!messageArea) {
+                console.error("Message area element not found!");
+                console.log(`Message (${type.toUpperCase()}): ${message.replace(/<br>/g, '\n').replace(/<strong>(.*?)<\/strong>/g, '$1')}`);
+                return;
+            }
+
+            messageArea.className = '';
+            messageArea.innerHTML = '';
+
+            if (message) {
+                messageArea.classList.add(type);
+                const p = document.createElement('p');
+                p.innerHTML = message;
+                messageArea.appendChild(p);
+            }
+        }
+
+        // ===== 地圖相關函數 =====
+        function initializeMap(lat, lng) {
+            if (mymap !== null) {
+                mymap.remove();
+            }
+
+            const mapElement = document.getElementById('map');
+            if (!mapElement) {
+                 console.error("Map container element with ID 'map' not found!");
+                 displayMessage("地圖容器元素未找到，地圖載入失敗。", "error");
+                 return;
+            }
+
+            try {
+                mymap = L.map('map', {
+                    dragging: true,
+                    touchZoom: true,
+                    scrollWheelZoom: true,
+                    doubleClickZoom: true,
+                    boxZoom: true,
+                    keyboard: true,
+                    zoomControl: true
+                }).setView([lat, lng], 15);
+
+                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                     maxZoom: 19,
+                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                 }).addTo(mymap);
+
+                 locationMarker = L.marker([lat, lng]).addTo(mymap)
+                    .bindPopup(`經緯度: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+
+                  mymap.invalidateSize();
+                  mymap.on('click', onMapClick);
+
+            } catch (e) {
+                console.error("初始化地圖失敗:", e);
+                displayMessage("地圖載入失敗，請檢查網路連線或清除瀏覽器快取。", "error");
+                mymap = null;
+            }
+        }
+
+        function onMapClick(e) {
+            const clickedLat = e.latlng.lat;
+            const clickedLng = e.latlng.lng;
+            const latLngInput = document.getElementById('latLngInput');
+
+            if (latLngInput) {
+                latLngInput.value = `${clickedLat.toFixed(6)}, ${clickedLng.toFixed(6)}`;
+                if (locationMarker) {
+                    locationMarker.setLatLng([clickedLat, clickedLng]);
+                    locationMarker.bindPopup(`經緯度: ${clickedLat.toFixed(4)}, ${clickedLng.toFixed(4)}`).openPopup();
+                } else if (mymap) {
+                    locationMarker = L.marker([clickedLat, clickedLng]).addTo(mymap)
+                        .bindPopup(`經緯度: ${clickedLat.toFixed(4)}, ${clickedLng.toFixed(4)}`).openPopup();
+                }
+                displayMessage(null);
+            } else {
+                console.error("找不到經緯度輸入框元素！");
+            }
+        }
+
+        function updateMap(lat, lng, panelAzimuth) {
+            if (typeof L === 'undefined' || mymap === null) {
+                console.warn("Leaflet 地圖未載入，跳過地圖更新。");
+                const mapElement = document.getElementById('map');
+                if (mapElement && mapElement.innerHTML.indexOf('地圖更新失敗') === -1 && 
+                    mapElement.innerHTML.indexOf('地圖載入失敗') === -1 && 
+                    mapElement.innerHTML.indexOf('地圖未載入') === -1) {
+                    mapElement.innerHTML = '<p style="text-align:center; color:red;">地圖未載入，無法顯示位置和方向。</p>';
+                }
+                return;
+            }
+
+            try {
+                if (mymap === null) {
+                    initializeMap(lat, lng);
+                    if (mymap === null) return;
+                }
+
+                const newLatLng = new L.LatLng(lat, lng);
+                const currentCenter = mymap.getCenter();
+                const point1 = mymap.latLngToContainerPoint(newLatLng);
+                const point2 = mymap.latLngToContainerPoint(currentCenter);
+                if (point1.distanceTo(point2) > 10) {
+                    mymap.panTo(newLatLng);
+                }
+
+                if (locationMarker === null) {
+                    locationMarker = L.marker(newLatLng).addTo(mymap);
+                } else {
+                    locationMarker.setLatLng(newLatLng);
+                }
+                locationMarker.bindPopup(`經緯度: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+
+                if (directionLine !== null) {
+                    mymap.removeLayer(directionLine);
+                    directionLine = null;
+                }
+
+                if (panelAzimuth !== undefined && panelAzimuth !== null && !isNaN(panelAzimuth) && 
+                    panelAzimuth >= 0 && panelAzimuth <= 360) {
+                    const lineLengthDegrees = 0.0005;
+                    const mathAngleRad = degToRad(90 - panelAzimuth);
+                    const deltaLat = lineLengthDegrees * Math.sin(mathAngleRad);
+                    const deltaLng = lineLengthDegrees * Math.cos(mathAngleRad) / Math.cos(degToRad(lat));
+                    const finalLat = lat + deltaLat;
+                    const finalLng = lng + deltaLng;
+                    const latLngs = [[lat, lng], [finalLat, finalLng]];
+                    directionLine = L.polyline(latLngs, {color: 'red', weight: 3}).addTo(mymap);
+                }
+            } catch (e) {
+                console.error("更新地圖顯示失敗:", e);
+                displayMessage("地圖更新顯示位置或方向失敗。", "error");
+            }
+        }
+
+        // ===== 太陽位置計算 =====
+        function calculateSunPosition(date, lat, lng) {
+            const dateUTC = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+            const dayOfYear = getDayOfYear(dateUTC);
+            const hoursUTC = dateUTC.getUTCHours();
+            const minutesUTC = dateUTC.getUTCMinutes();
+            const secondsUTC = dateUTC.getUTCSeconds();
+            const totalHoursUTC = hoursUTC + minutesUTC / 60 + secondsUTC / 3600;
+
+            const solarDeclinationDeg = getSolarDeclination(dayOfYear);
+            const solarDeclinationRad = degToRad(solarDeclinationDeg);
+
+            const B_rad = degToRad((360 / 365) * (dayOfYear - 81));
+            const equationOfTimeMinutes = 9.87 * Math.sin(2 * B_rad) - 7.53 * Math.cos(B_rad) - 1.5 * Math.sin(B_rad);
+            const trueSolarTimeHours = totalHoursUTC + equationOfTimeMinutes / 60 + lng / 15;
+            const hourAngleDeg = (trueSolarTimeHours - 12) * 15;
+            const hourAngleRad = degToRad(hourAngleDeg);
+            const latRad = degToRad(lat);
+
+            const sinAltitude = Math.sin(latRad) * Math.sin(solarDeclinationRad) +
+                               Math.cos(latRad) * Math.cos(solarDeclinationRad) * Math.cos(hourAngleRad);
+            const clampedSinAltitude = Math.max(-1, Math.min(1, sinAltitude));
+            const altitudeRad = Math.asin(clampedSinAltitude);
+            const altitudeDeg = radToDeg(altitudeRad);
+
+            const sinAzimuth = -Math.sin(hourAngleRad) * Math.cos(solarDeclinationRad);
+            const cosAzimuth = Math.cos(latRad) * Math.sin(solarDeclinationRad) - 
+                              Math.sin(latRad) * Math.cos(solarDeclinationRad) * Math.cos(hourAngleRad);
+            let azimuthRad = Math.atan2(sinAzimuth, cosAzimuth);
+            let azimuthDeg = radToDeg(azimuthRad);
+            azimuthDeg = (azimuthDeg + 360) % 360;
+
+            return {
+                altitude: altitudeDeg,
+                azimuth: azimuthDeg,
+                declination: solarDeclinationDeg
+            };
+        }
+
+        function calculateIrradianceOnTiltedPanel(baseIrradiance, sunAltitudeDeg, sunAzimuthDeg, panelTiltDeg, panelAzimuthDeg) {
+            if (sunAltitudeDeg <= 0) {
+                return 0;
+            }
+
+            const sunAltRad = degToRad(sunAltitudeDeg);
+            const sunAzRad = degToRad(sunAzimuthDeg);
+            const panelTiltRad = degToRad(panelTiltDeg);
+            const panelAzRad = degToRad(panelAzimuthDeg);
+            const sunZenithRad = degToRad(90 - sunAltitudeDeg);
+
+            const cosThetaInc = Math.cos(sunZenithRad) * Math.cos(panelTiltRad) +
+                               Math.sin(sunZenithRad) * Math.sin(panelTiltRad) * Math.cos(sunAzRad - panelAzRad);
+
+            return baseIrradiance * Math.max(0, cosThetaInc);
+        }
+
+        // ===== 角度建議函數 =====
+        function showIdealAngleForSelectedMonthOrientation() {
+            const latLngString = document.getElementById('latLngInput').value;
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+
+            try {
+                const parts = latLngString.split(',');
+                if (parts.length !== 2) {
+                    throw new Error("經緯度格式不正確，請輸入 '緯度, 經度'。");
+                }
+
+                const lat = parseFloat(parts[0].trim());
+                const lng = parseFloat(parts[1].trim());
+
+                if (isNaN(lat) || lat < -90 || lat > 90) { throw new Error("緯度數值無效！"); }
+                if (isNaN(month) || month < 0 || month > 11) { throw new Error("月份選擇無效！"); }
+                if (isNaN(year) || year < 1990 || year > new Date().getFullYear()) { throw new Error("年份無效！請選擇 1990 到當前年份之間的數值。"); }
+
+                const suggestedAzimuth = 180;
+                const tempDateForDeclination = new Date(Date.UTC(year, month, 15));
+                const dayOfYearForDeclination = getDayOfYear(tempDateForDeclination);
+                const monthlyAverageDeclination = getSolarDeclination(dayOfYearForDeclination);
+                let suggestedTilt = lat - monthlyAverageDeclination;
+                suggestedTilt = Math.max(0, Math.min(90, suggestedTilt));
+
+                updateMap(lat, lng, suggestedAzimuth);
+
+                const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+                const message = `<strong>該月理論最佳角度 (供參考)：</strong><br>根據 ${year} 年 ${monthNames[month]} 月的太陽位置：<br>傾斜角 (Tilt): ${suggestedTilt.toFixed(1)} 度<br>方位角 (Azimuth): ${suggestedAzimuth.toFixed(0)} 度 (正南)<br><br>注意：這是在該月理論上能達到最高發電的角度，**不建議用於固定式安裝**。如需計算，請手動將這些數值填入上方輸入框。`;
+                displayMessage(message, 'info');
+
+            } catch (error) {
+                displayMessage("顯示該月理論最佳角度出錯：" + error.message, 'error');
+            }
+        }
+
+        function suggestOptimalAnnualOrientation() {
+            const latLngString = document.getElementById('latLngInput').value;
+            const panelTiltInput = document.getElementById('panelTilt');
+            const panelAzimuthInput = document.getElementById('panelAzimuth');
+
+            try {
+                const parts = latLngString.split(',');
+                if (parts.length !== 2) {
+                    throw new Error("經緯度格式不正確，請輸入 '緯度, 經度'。");
+                }
+
+                const lat = parseFloat(parts[0].trim());
+                const lng = parseFloat(parts[1].trim());
+
+                if (isNaN(lat) || lat < -90 || lat > 90) { throw new Error("緯度數值無效！"); }
+
+                const suggestedAzimuth = 180;
+                let suggestedTilt = Math.abs(lat);
+                suggestedTilt = Math.max(0, Math.min(90, suggestedTilt));
+
+                panelTiltInput.value = suggestedTilt.toFixed(1);
+                panelAzimuthInput.value = suggestedAzimuth.toFixed(0);
+
+                updateMap(lat, lng, suggestedAzimuth);
+
+                const message = `<strong>全年最佳安裝角度 (固定式建議)：</strong><br>根據所在地緯度 (${lat.toFixed(2)} 度)：<br>傾斜角 (Tilt): ${suggestedTilt.toFixed(1)} 度<br>方位角 (Azimuth): ${suggestedAzimuth.toFixed(0)} 度 (正南)<br><br>這是固定式安裝通常建議的角度，旨在最大化全年的總發電量。建議值已自動填入上方輸入框供您計算。`;
+                displayMessage(message, 'success');
+
+            } catch (error) {
+                displayMessage("建議全年最佳角度出錯：" + error.message, 'error');
+            }
+        }
+
+        // ===== 數據處理函數 =====
+        function saveCalculationData() {
+            try {
+                const data = {
+                    latLng: document.getElementById('latLngInput').value,
+                    month: document.getElementById('monthSelect').value,
+                    year: document.getElementById('yearSelect').value,
+                    panelWattsEach: document.getElementById('panelWattsEach').value,
+                    numberOfPanels: document.getElementById('numberOfPanels').value,
+                    panelTilt: document.getElementById('panelTilt').value,
+                    panelAzimuth: document.getElementById('panelAzimuth').value,
+                    shadingLoss: document.getElementById('shadingLoss').value,
+                    soilingAgingLoss: document.getElementById('soilingAgingLoss').value,
+                    otherLoss: document.getElementById('otherLoss').value,
+                    lastCalculationDate: new Date().toISOString()
+                };
+                localStorage.setItem('solarCalculatorData', JSON.stringify(data));
+                console.log("計算數據已保存");
+            } catch (error) {
+                console.error("保存數據失敗:", error);
+            }
+        }
+
+        function loadLastCalculationData() {
+            try {
+                const savedData = localStorage.getItem('solarCalculatorData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    document.getElementById('latLngInput').value = data.latLng || '';
+                    document.getElementById('monthSelect').value = data.month || '0';
+                    document.getElementById('yearSelect').value = data.year || new Date().getFullYear();
+                    document.getElementById('panelWattsEach').value = data.panelWattsEach || '400';
+                    document.getElementById('numberOfPanels').value = data.numberOfPanels || '10';
+                    document.getElementById('panelTilt').value = data.panelTilt || '23.5';
+                    document.getElementById('panelAzimuth').value = data.panelAzimuth || '180';
+                    document.getElementById('shadingLoss').value = data.shadingLoss || '5';
+                    document.getElementById('soilingAgingLoss').value = data.soilingAgingLoss || '2';
+                    document.getElementById('otherLoss').value = data.otherLoss || '8';
+
+                    if (data.latLng) {
+                        const parts = data.latLng.split(',');
+                        if (parts.length === 2) {
+                            const lat = parseFloat(parts[0].trim());
+                            const lng = parseFloat(parts[1].trim());
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                if (mymap === null) {
+                                    initializeMap(lat, lng);
+                                } else {
+                                    updateMap(lat, lng, parseFloat(data.panelAzimuth));
+                                }
+                            }
+                        }
+                    }
+
+                    const lastDate = new Date(data.lastCalculationDate);
+                    displayMessage(`已載入上次計算數據 (${lastDate.toLocaleString()})`, 'info');
+                }
+            } catch (error) {
+                console.error("載入數據失敗:", error);
+                displayMessage("載入上次計算數據失敗", 'error');
+            }
+        }
+
+        // ===== 事件處理函數 =====
+        function onCountySelectChange() {
+            const countySelect = document.getElementById('countySelect');
+            const selectedCountyName = countySelect.value;
+
+            if (selectedCountyName && taiwanCounties[selectedCountyName]) {
+                const countyLocation = taiwanCounties[selectedCountyName];
+                const lat = countyLocation.lat;
+                const lng = countyLocation.lng;
+
+                if (mymap !== null) {
+                    mymap.setView([lat, lng], 12);
+                } else {
+                    initializeMap(lat, lng);
+                }
+
+                const latLngInput = document.getElementById('latLngInput');
+                if (latLngInput) {
+                    latLngInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    if (locationMarker) {
+                        locationMarker.setLatLng([lat, lng]);
+                        locationMarker.bindPopup(`經緯度: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                    }
+                }
+                displayMessage(null);
+            } else {
+                console.warn("選擇的縣市未找到或無效。");
+                const latLngInput = document.getElementById('latLngInput');
+                if (latLngInput) {
+                    latLngInput.value = "";
+                }
+                if (locationMarker) {
+                    mymap.removeLayer(locationMarker);
+                    locationMarker = null;
+                }
+                if (directionLine) {
+                    mymap.removeLayer(directionLine);
+                    directionLine = null;
+                }
+                displayMessage(null);
+            }
+        }
+
+        // ===== 頁面初始化 =====
+        window.onload = function() {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            
+            // 設定年份選擇範圍
+            const yearSelect = document.getElementById('yearSelect');
+            yearSelect.innerHTML = ''; // 清空現有選項
+            
+            // 從 1900 年到當前年份
+            for (let year = 1990; year <= currentYear; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.text = `${year} 年`;
+                yearSelect.appendChild(option);
+            }
+            
+            // 預設選擇當前年份
+            yearSelect.value = currentYear;
+
+            // 設定月份選擇
+            const monthSelect = document.getElementById('monthSelect');
+            monthSelect.innerHTML = ''; // 清空現有選項
+            
+            // 如果是當前年份，只能選擇到上個月
+            const maxMonth = (currentYear === parseInt(yearSelect.value)) ? currentMonth - 1 : 11;
+            
+            for (let i = 0; i <= maxMonth; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = `${i + 1} 月`;
+                monthSelect.appendChild(option);
+            }
+            
+            // 預設選擇上個月
+            monthSelect.value = maxMonth;
+
+            // 監聽年份變化，更新月份選項
+            yearSelect.addEventListener('change', function() {
+                const selectedYear = parseInt(this.value);
+                const maxMonth = (selectedYear === currentYear) ? currentMonth - 1 : 11;
+                
+                // 更新月份選項
+                monthSelect.innerHTML = '';
+                for (let i = 0; i <= maxMonth; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.text = `${i + 1} 月`;
+                    monthSelect.appendChild(option);
+                }
+                
+                // 如果當前選擇的月份超出範圍，則選擇最後一個可用月份
+                if (parseInt(monthSelect.value) > maxMonth) {
+                    monthSelect.value = maxMonth;
+                }
+            });
+
+            // 監聽月份變化，確保不超過限制
+            monthSelect.addEventListener('change', function() {
+                const selectedYear = parseInt(yearSelect.value);
+                const maxMonth = (selectedYear === currentYear) ? currentMonth - 1 : 11;
+                
+                if (parseInt(this.value) > maxMonth) {
+                    this.value = maxMonth;
+                }
+            });
+
+            const countySelect = document.getElementById('countySelect');
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.text = "--- 請選擇縣市 ---";
+            countySelect.appendChild(defaultOption);
+
+            const sortedCounties = Object.entries(taiwanCounties)
+                .sort((a, b) => {
+                    const latDiff = b[1].lat - a[1].lat;
+                    if (latDiff !== 0) return latDiff;
+                    return b[1].lng - a[1].lng;
+                });
+
+            sortedCounties.forEach(([countyName, _]) => {
+                const option = document.createElement('option');
+                option.value = countyName;
+                option.text = countyName;
+                countySelect.appendChild(option);
+            });
+
+            countySelect.addEventListener('change', onCountySelectChange);
+
+            const showIdealMonthButton = document.getElementById('showIdealAngleForSelectedMonth');
+            if (showIdealMonthButton) {
+                showIdealMonthButton.addEventListener('click', showIdealAngleForSelectedMonthOrientation);
+            }
+
+            const suggestAnnualButton = document.getElementById('suggestAnnualAngleButton');
+            if (suggestAnnualButton) {
+                suggestAnnualButton.addEventListener('click', suggestOptimalAnnualOrientation);
+            }
+
+            loadLastCalculationData();
+
+            if (mymap === null) {
+                const defaultLatLngString = document.getElementById('latLngInput').value;
+                const parts = defaultLatLngString.split(',');
+                let initialLat = 23.588093;
+                let initialLng = 120.630267;
+
+                if (parts.length === 2) {
+                    const parsedLat = parseFloat(parts[0].trim());
+                    const parsedLng = parseFloat(parts[1].trim());
+                    if (!isNaN(parsedLat) && parsedLat >= -90 && parsedLat <= 90 && 
+                        !isNaN(parsedLng) && parsedLng >= -180 && parsedLng <= 180) {
+                        initialLat = parsedLat;
+                        initialLng = parsedLng;
+                    }
+                }
+
+                initializeMap(initialLat, initialLng);
+            }
+        };
+
+        // ===== 計算功能 =====
+        async function calculateMonthlySolar() {
+            const latLngString = document.getElementById('latLngInput').value;
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+
+            const panelWattsEach = parseFloat(document.getElementById('panelWattsEach').value);
+            const numberOfPanels = parseInt(document.getElementById('numberOfPanels').value);
+            const panelTilt = parseFloat(document.getElementById('panelTilt').value);
+            const panelAzimuth = parseFloat(document.getElementById('panelAzimuth').value);
+
+            const shadingLossPercentage = parseFloat(document.getElementById('shadingLoss').value);
+            const soilingAgingLossPercentage = parseFloat(document.getElementById('soilingAgingLoss').value);
+            const otherLossPercentage = parseFloat(document.getElementById('otherLoss').value);
+
+            displayMessage(null);
+             document.getElementById('calculatedMonth').innerText = '-';
+             document.getElementById('calculatedSystemWatts').innerText = '-';
+             document.getElementById('calculatedTotalLoss').innerText = '-';
+             document.getElementById('monthlyTotalEnergy').innerText = '-';
+
+            displayMessage("計算中... 請稍候...", 'info');
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            let lat, lng;
+
+            try {
+                const parts = latLngString.split(',');
+                if (parts.length !== 2) {
+                    throw new Error("經緯度格式不正確，請輸入 '緯度, 經度' (例如: 23.588093, 120.630267)。");
+                }
+
+                lat = parseFloat(parts[0].trim());
+                lng = parseFloat(parts[1].trim());
+
+                if (isNaN(lat) || lat < -90 || lat > 90) { throw new Error("緯度數值無效！請輸入 -90 到 90 之間的數值。"); }
+                 if (isNaN(lng) || lng < -180 || lng > 180) { throw new Error("經度數值無效！請輸入 -180 到 180 之間的數值。"); }
+                if (isNaN(month) || month < 0 || month > 11) { throw new Error("月份選擇無效！"); }
+                if (isNaN(year) || year < 1990 || year > new Date().getFullYear()) { throw new Error("年份無效！請選擇 1990 到當前年份之間的數值。"); }
+                if (isNaN(panelWattsEach) || panelWattsEach <= 0) { throw new Error("單片面板瓦數無效！請輸入大於0的數值。"); }
+                if (isNaN(numberOfPanels) || numberOfPanels <= 0 || !Number.isInteger(numberOfPanels)) { throw new Error("太陽能板片數無效！請輸入大於0的整數。"); }
+                if (isNaN(panelTilt) || panelTilt < 0 || panelTilt > 90) { throw new Error("面板傾斜角無效！請輸入 0-90 之間的數值。"); }
+                 if (isNaN(panelAzimuth) || panelAzimuth < 0 || panelAzimuth > 360) { throw new Error("面板方位角無效！請輸入 0-360 之間的數值。"); }
+
+                 if (isNaN(shadingLossPercentage) || shadingLossPercentage < 0 || shadingLossPercentage > 100) {
+                      throw new Error("估計陰影損耗無效！請輸入 0-100 之間的百分比數值。");
+                 }
+                 if (isNaN(soilingAgingLossPercentage) || soilingAgingLossPercentage < 0 || soilingAgingLossPercentage > 100) {
+                      throw new Error("估計污染/老化損耗無效！請輸入 0-100 之間的百分比數值。");
+                 }
+                 if (isNaN(otherLossPercentage) || otherLossPercentage < 0 || otherLossPercentage > 100) {
+                      throw new Error("估計其他損耗無效！請輸入 0-100 之間的百分比數值。");
+                 }
+
+                 try {
+                      updateMap(lat, lng, panelAzimuth);
+                 } catch (mapError) {
+                      console.error("地圖更新失敗:", mapError);
+                    displayMessage("地圖更新顯示位置或方向失敗，但計算會繼續。", "warning");
+                 }
+
+                const systemWattsTotal = panelWattsEach * numberOfPanels;
+                const shadingLossFactor = shadingLossPercentage / 100;
+                const soilingAgingLossFactor = soilingAgingLossPercentage / 100;
+                const otherLossFactor = otherLossPercentage / 100;
+                let totalLossFactor = shadingLossFactor + soilingAgingLossFactor + otherLossFactor;
+                 totalLossFactor = Math.min(totalLossFactor, 1);
+                 const totalLossPercentage = totalLossFactor * 100;
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                let totalMonthlyEnergyWh = 0;
+                const calculationIntervalMinutes = 10;
+                const intervalHours = calculationIntervalMinutes / 60;
+                const theoreticalMaxIrradiance = 1000;
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    for (let hour = 0; hour < 24; hour++) {
+                         for (let minute = 0; minute < 60; minute += calculationIntervalMinutes) {
+                             const currentDate = new Date(year, month, day, hour, minute, 0);
+                             const sunPosition = calculateSunPosition(currentDate, lat, lng);
+                            const sunAltitude = sunPosition.altitude;
+
+                             if (sunAltitude <= 0) {
+                                 continue;
+                             }
+
+                            const sunAzimuth = sunPosition.azimuth;
+                             const instantaneousIrradianceOnPanel = calculateIrradianceOnTiltedPanel(
+                                 theoreticalMaxIrradiance,
+                                 sunAltitude,
+                                 sunAzimuth,
+                                 panelTilt,
+                                 panelAzimuth
+                             );
+
+                             const instantaneousPowerWatts = instantaneousIrradianceOnPanel * (systemWattsTotal / theoreticalMaxIrradiance) * (1 - totalLossFactor);
+                             const energyThisIntervalWh = instantaneousPowerWatts * intervalHours;
+                             totalMonthlyEnergyWh += energyThisIntervalWh;
+                         }
+                    }
+                }
+
+                const totalMonthlyEnergykWh = totalMonthlyEnergyWh / 1000;
+                displayMessage("計算完成！結果已更新。", 'success');
+
+                 document.getElementById('calculatedMonth').innerText = `${year} 年 ${month + 1} 月`;
+                document.getElementById('calculatedSystemWatts').innerText = systemWattsTotal.toFixed(0);
+                document.getElementById('calculatedTotalLoss').innerText = totalLossPercentage.toFixed(1);
+                document.getElementById('monthlyTotalEnergy').innerText = totalMonthlyEnergykWh.toFixed(2);
+
+                saveCalculationData();
+                await fetchHistoricalSolarData(lat, lng, year, month);
+
+            } catch (error) {
+                displayMessage("計算出錯：" + error.message, 'error');
+                 document.getElementById('calculatedMonth').innerText = '-';
+                 document.getElementById('calculatedSystemWatts').innerText = '-';
+                 document.getElementById('calculatedTotalLoss').innerText = '-';
+                document.getElementById('monthlyTotalEnergy').innerText = '-';
+            }
+        }
+
+        // ===== 歷史數據處理 =====
+        async function fetchHistoricalSolarData(lat, lng, year, month) {
+            try {
+                const startDate = new Date(year, month, 1);
+                const endDate = new Date(year, month + 1, 0);
+                
+                const formatDate = (date) => {
+                    return date.toISOString().split('T')[0];
+                };
+
+                const apiUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&daily=sunshine_duration&timezone=Asia%2FTaipei`;
+
+                displayMessage("正在獲取歷史日照數據...", 'info');
+
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`API 請求失敗: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.daily || !data.daily.sunshine_duration) {
+                    throw new Error("API 返回數據格式不正確");
+                }
+
+                const tbody = document.querySelector('#dailyRecordsTable tbody');
+                tbody.innerHTML = '';
+
+                let totalSunshineHours = 0;
+                const dailyRecords = [];
+
+                for (let i = 0; i < data.daily.time.length; i++) {
+                    const date = new Date(data.daily.time[i]);
+                    const sunshineSeconds = data.daily.sunshine_duration[i];
+                    const sunshineHours = sunshineSeconds / 3600;
+                    totalSunshineHours += sunshineHours;
+
+                    const avgIrradiance = 800;
+                    const systemWattsTotal = parseFloat(document.getElementById('panelWattsEach').value) * 
+                                           parseInt(document.getElementById('numberOfPanels').value);
+                    const totalLossFactor = parseFloat(document.getElementById('calculatedTotalLoss').innerText) / 100;
+                    const dailyEnergy = (systemWattsTotal * sunshineHours * (1 - totalLossFactor)) / 1000;
+
+                    dailyRecords.push({
+                        date: date,
+                        sunshineHours: sunshineHours,
+                        irradiance: avgIrradiance,
+                        energy: dailyEnergy
+                    });
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${date.toLocaleDateString()}</td>
+                        <td>${sunshineHours.toFixed(1)}</td>
+                        <td>${avgIrradiance.toFixed(0)}</td>
+                        <td>${dailyEnergy.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+
+                const avgSunshineHours = totalSunshineHours / data.daily.time.length;
+                document.getElementById('actualAvgIrradiance').innerText = '800';
+                document.getElementById('actualSunHours').innerText = totalSunshineHours.toFixed(1);
+                
+                const totalEnergy = dailyRecords.reduce((sum, record) => sum + record.energy, 0);
+                document.getElementById('actualEnergyEstimate').innerText = totalEnergy.toFixed(2);
+                
+                displayMessage("歷史日照數據已更新", 'success');
+            } catch (error) {
+                console.error("獲取歷史日照數據失敗:", error);
+                displayMessage("獲取歷史日照數據失敗: " + error.message, 'error');
+                
+                document.getElementById('actualAvgIrradiance').innerText = '-';
+                document.getElementById('actualSunHours').innerText = '-';
+                document.getElementById('actualEnergyEstimate').innerText = '-';
+                
+                const tbody = document.querySelector('#dailyRecordsTable tbody');
+                tbody.innerHTML = '';
+            }
+        }
+
+        // 版本歷程記錄功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleVersionHistory');
+            const versionList = document.getElementById('versionList');
+            const versionHistory = document.querySelector('.version-history');
+            
+            // 預設為關閉狀態
+            versionList.classList.remove('expanded');
+            toggleBtn.classList.add('collapsed');
+
+            // 點擊標題或按鈕都可以切換
+            versionHistory.querySelector('h2').addEventListener('click', function(e) {
+                if (e.target !== toggleBtn) {
+                    toggleVersionList();
+                }
+            });
+
+            toggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleVersionList();
+            });
+
+            function toggleVersionList() {
+                versionList.classList.toggle('expanded');
+                toggleBtn.classList.toggle('collapsed');
+            }
+        });
+
+        // 處理 tooltip 位置
+        function adjustTooltipPosition(tooltip, container) {
+            const containerRect = container.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // 計算初始位置（相對於容器）
+            let left = containerRect.left + (containerRect.width / 2);
+            let top = containerRect.top - tooltipRect.height - 10;
+            
+            // 檢查右側邊界
+            if (left + (tooltipRect.width / 2) > viewportWidth) {
+                left = viewportWidth - (tooltipRect.width / 2) - 10;
+            }
+            
+            // 檢查左側邊界
+            if (left - (tooltipRect.width / 2) < 0) {
+                left = (tooltipRect.width / 2) + 10;
+            }
+            
+            // 檢查底部邊界
+            if (top < 0) {
+                top = containerRect.bottom + 10;
+                tooltip.style.transform = 'translateX(-50%) rotate(180deg)';
+            } else {
+                tooltip.style.transform = 'translateX(-50%)';
+            }
+            
+            // 設置位置
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+
+        // 監聽所有 tooltip 容器
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipContainers = document.querySelectorAll('.tooltip-container');
+            
+            tooltipContainers.forEach(container => {
+                container.addEventListener('mouseenter', function() {
+                    const tooltip = this.querySelector('.tooltip-content');
+                    if (tooltip) {
+                        adjustTooltipPosition(tooltip, this);
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

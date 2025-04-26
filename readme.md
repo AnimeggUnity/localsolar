@@ -62,11 +62,3 @@ All calculations are done **entirely in-browser** — no backend required.
 - 結果僅供參考，實際發電會因天氣與環境條件而有所不同
 - 請確保經緯度格式正確（例如：`23.588093, 120.630267`）
 
----
-
-## 🖼️ 預覽 / Preview
-
-（如果你有放圖片，可以在這裡加一行，例如👇）
-
-```markdown
-![Preview Screenshot](preview.png)
